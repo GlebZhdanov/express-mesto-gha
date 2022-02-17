@@ -35,7 +35,7 @@ exports.deleteCard = async (req, res) => {
     if (card) {
       res.status(200).send(card);
     } else {
-      res.status(400).send({ message: 'Карточка не найдена' });
+      res.status(404).send({ message: 'Карточка не найдена' });
     }
   } catch (e) {
     res.status(500).send({ message: 'Ошибка по умолчанию' });

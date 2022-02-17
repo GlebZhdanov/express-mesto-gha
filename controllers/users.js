@@ -15,7 +15,7 @@ module.exports.getUsersById = async (req, res) => {
     if (user) {
       res.status(200).send(user);
     } else {
-      res.status(400).send({ message: 'Пользователь не найден' });
+      res.status(404).send({ message: 'Пользователь не найден' });
     }
   } catch (e) {
     if (e.name === 'CastError');
