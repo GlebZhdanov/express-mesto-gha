@@ -1,4 +1,6 @@
 name: Тесты 13 спринт
+
+  on:
   push:
     branches:
       - '**'
