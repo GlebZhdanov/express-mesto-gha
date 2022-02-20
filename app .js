@@ -6,6 +6,8 @@ const cardRouter = require('./routes/cards');
 const { PORT = 3000 } = process.env;
 const app = express();
 
+app.use(express.json());
+
 app.use((req, res, next) => {
   req.user = {
     _id: '620bef5408601ce9de117f30',

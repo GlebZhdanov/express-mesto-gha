@@ -18,18 +18,22 @@ module.exports.getUsersById = async (req, res) => {
       res.status(404).send({ message: 'Пользователь не найден' });
     }
   } catch (e) {
-    if (e.name === 'CastError');
-    res.status(500).send({ message: 'Ошибка валидации id' });
+    if (e.name !== 'CastError') {
+      res.status(400).send({ message: 'Ошибка валидации id' });
+    } else {
+      res.status(500).send({ message: 'Произошла ошибка' });
+    }
   }
 };
 
 module.exports.postUsers = async (req, res) => {
   try {
-    const user = new User(req.body);
-    return res.status(201).send(await user.save(req.body));
+    const { name, about, avatar } = req.body;
+    const user = new User({ name, about, avatar });
+    return res.status(201).send(await user.save());
   } catch (e) {
     if (e.name === 'ValidationError') {
-      return res.status(404).send({ message: 'Переданы некорректные данные пользователя' });
+      return res.status(400).send({ message: 'Переданы некорректные данные пользователя' });
     }
     return res.status(500).send({ message: 'Ошибка по умолчанию' });
   }
@@ -43,10 +47,13 @@ module.exports.patchUsers = async (req, res) => {
       { name, about },
       { new: true, runValidators: true },
     );
-    return res.status(200).send(user);
+    if (user) {
+      res.status(200).send(user);
+    }
+    return res.status(404).send({ message: 'Пользователь не найден' });
   } catch (e) {
     if (e.name === 'ValidationError') {
-      return res.status(404).send({ message: 'Переданы некорректные данные пользователя' });
+      return res.status(400).send({ message: 'Переданы некорректные данные пользователя' });
     }
     return res.status(500).send({ message: 'Ошибка по умолчанию' });
   }
@@ -60,10 +67,13 @@ module.exports.patchUsersAvatar = async (req, res) => {
       { avatar },
       { new: true, runValidators: true },
     );
-    return res.status(200).send(user);
+    if (user) {
+      res.status(200).send(user);
+    }
+    return res.status(404).send({ message: 'Пользователь не найден' });
   } catch (e) {
     if (e.name === 'ValidationError') {
-      return res.status(404).send({ message: 'Переданы некорректные данные пользователя' });
+      return res.status(400).send({ message: 'Переданы некорректные данные пользователя' });
     }
     return res.status(500).send({ message: 'Ошибка по умолчанию' });
   }

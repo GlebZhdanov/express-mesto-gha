@@ -8,18 +8,15 @@ const {
 } = require('../controllers/users');
 
 const router = express.Router();
-const app = express();
-
-app.use(express.json());
 
 router.get('/', getUsers);
 
 router.get('/:id', getUsersById);
 
-router.post('/', express.json(), postUsers);
+router.post('/', postUsers);
 
-router.patch('/me', express.json(), patchUsers);
+router.patch('/me', patchUsers);
 
-router.patch('/me/avatar', express.json(), patchUsersAvatar);
+router.patch('/me/avatar', patchUsersAvatar);
 
 module.exports = router;
