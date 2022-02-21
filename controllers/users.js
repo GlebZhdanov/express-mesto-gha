@@ -41,10 +41,14 @@ module.exports.postUsers = async (req, res) => {
 
 module.exports.patchUsers = async (req, res) => {
   try {
-    const { name, about } = req.body;
+    // const { name, about } = req.body;
     const user = await User.findByIdAndUpdate(
       req.user._id,
-      { name, about },
+      { $set: {
+          name : req.body.name,
+          about : req.body.about
+        }
+      },
       { new: true, runValidators: true },
     );
      if (user) {
@@ -63,17 +67,17 @@ module.exports.patchUsers = async (req, res) => {
 
 module.exports.patchUsersAvatar = async (req, res) => {
   try {
-    const avatar = req.body.avatar
+    const { avatar } = req.body;
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { avatar },
       { new: true, runValidators: true },
     );
-    if (!avatar) {
-      return res.status(400).send({ message: 'Поле "avatar" должно быть заполнено' });
-    }
     if (user) {
       return res.status(200).send(user);
+    }
+    if (!avatar) {
+      return res.status(400).send({ message: 'Поле "avatar" должно быть заполнено' });
     }
     return res.status(404).send({ message: 'Пользователь не найден' });
   } catch (e) {
