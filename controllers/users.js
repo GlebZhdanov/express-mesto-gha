@@ -50,7 +50,7 @@ module.exports.patchUsers = async (req, res) => {
     if (!name || !about) {
       return res.status(400).send({ message: 'Поля "name" и "about" должно быть заполнены' });
     } if (user) {
-      return res.status(200).send(user);
+      return res.status(404).send(user);
     }
     return res.status(404).send({ message: 'Пользователь не найден' });
   } catch (e) {
