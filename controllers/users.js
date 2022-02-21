@@ -53,7 +53,7 @@ module.exports.patchUsers = async (req, res) => {
     );
      if (user) {
       return res.status(200).send(user);
-    } if (!name || !about) {
+    } if (!req.body.name || !req.body.about) {
       return res.status(400).send({ message: 'Поля "name" и "about" должно быть заполнены' });
     }
     return res.status(404).send({ message: 'Пользователь не найден' });
