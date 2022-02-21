@@ -63,7 +63,7 @@ module.exports.patchUsers = async (req, res) => {
 
 module.exports.patchUsersAvatar = async (req, res) => {
   try {
-    const { avatar } = req.body;
+    const avatar = req.body.avatar
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { avatar },
