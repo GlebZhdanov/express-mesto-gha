@@ -55,7 +55,7 @@ module.exports.patchUsers = async (req, res) => {
     return res.status(404).send({ message: 'Пользователь не найден' });
   } catch (e) {
     if (e.name === 'ValidationError') {
-      return res.status(400).send();
+      return res.status(400).send({ message: 'Переданы некорректные данные пользователя' });
     }
     return res.status(500).send({ message: 'Ошибка по умолчанию' });
   }
