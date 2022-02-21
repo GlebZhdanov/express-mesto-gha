@@ -33,15 +33,14 @@ exports.deleteCard = async (req, res) => {
   try {
     const card = await Card.findByIdAndDelete(req.params.id);
     if (card) {
-      res.status(200).send(card);
-    } else {
-      res.status(404).send({ message: 'Карточка не найдена' });
+      return res.status(200).send(card);
     }
+    return res.status(404).send({ message: 'Карточка не найдена' });
   } catch (e) {
     if (e.name === 'CastError') {
-      res.status(400).send({ message: 'Невалидный id ' });
+      return res.status(400).send({ message: 'Невалидный id ' });
     }
-    res.status(500).send({ message: 'Ошибка по умолчанию' });
+    return res.status(500).send({ message: 'Ошибка по умолчанию' });
   }
 };
 
@@ -53,15 +52,14 @@ exports.putCardLike = async (req, res) => {
       { new: true },
     );
     if (likeCard) {
-      res.status(200).send(likeCard);
-    } else {
-      res.status(404).send({ message: 'Карточка не найдена' });
+      return res.status(200).send(likeCard);
     }
+    return res.status(404).send({ message: 'Карточка не найдена' });
   } catch (e) {
     if (e.name === 'CastError') {
-      res.status(400).send({ message: 'Невалидный id ' });
+      return res.status(400).send({ message: 'Невалидный id ' });
     }
-    res.status(500).send({ message: 'Ошибка по умолчанию' });
+    return res.status(500).send({ message: 'Ошибка по умолчанию' });
   }
 };
 
@@ -73,14 +71,13 @@ exports.deleteCardLike = async (req, res) => {
       { new: true },
     );
     if (dislikeCard) {
-      res.status(200).send(dislikeCard);
-    } else {
-      res.status(404).send({ message: 'Карточка не найдена' });
+      return res.status(200).send(dislikeCard);
     }
+    return res.status(404).send({ message: 'Карточка не найдена' });
   } catch (e) {
     if (e.name === 'CastError') {
-      res.status(400).send({ message: 'Невалидный id ' });
+      return res.status(400).send({ message: 'Невалидный id ' });
     }
-    res.status(500).send({ message: 'Ошибка по умолчанию' });
+    return res.status(500).send({ message: 'Ошибка по умолчанию' });
   }
 };

@@ -18,7 +18,7 @@ module.exports.getUsersById = async (req, res) => {
       res.status(404).send({ message: 'Пользователь не найден' });
     }
   } catch (e) {
-    if (e.name !== 'CastError') {
+    if (e.name === 'CastError') {
       res.status(400).send({ message: 'Ошибка валидации id' });
     } else {
       res.status(500).send({ message: 'Произошла ошибка' });
@@ -47,8 +47,10 @@ module.exports.patchUsers = async (req, res) => {
       { name, about },
       { new: true, runValidators: true },
     );
-    if (user) {
-      res.status(200).send(user);
+    if (!name || !about) {
+      return res.status(400).send({ message: 'Поля "name" и "about" должно быть заполнены' });
+    } if (user) {
+      return res.status(200).send(user);
     }
     return res.status(404).send({ message: 'Пользователь не найден' });
   } catch (e) {
@@ -67,8 +69,11 @@ module.exports.patchUsersAvatar = async (req, res) => {
       { avatar },
       { new: true, runValidators: true },
     );
+    if (!avatar) {
+      return res.status(400).send({ message: 'Поле "avatar" должно быть заполнено' });
+    }
     if (user) {
-      res.status(200).send(user);
+      return res.status(200).send(user);
     }
     return res.status(404).send({ message: 'Пользователь не найден' });
   } catch (e) {
