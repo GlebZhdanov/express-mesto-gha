@@ -47,10 +47,10 @@ module.exports.patchUsers = async (req, res) => {
       { name, about },
       { new: true, runValidators: true },
     );
-    if (!name || !about) {
+     if (user) {
+      return res.status(200).send(user);
+    } if (!name || !about) {
       return res.status(400).send({ message: 'Поля "name" и "about" должно быть заполнены' });
-    } if (user) {
-      return res.status(404).send(user);
     }
     return res.status(404).send({ message: 'Пользователь не найден' });
   } catch (e) {
