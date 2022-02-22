@@ -51,7 +51,7 @@ module.exports.patchUsers = async (req, res) => {
       { new: true, runValidators: true },
     );
     if (user) {
-      return res.status(200).send({ data: user });
+      return res.status(200).send(user);
     }
     return res.status(404).send({ message: 'Пользователь не найден' });
   } catch (e) {
@@ -74,7 +74,7 @@ module.exports.patchUsersAvatar = async (req, res) => {
       { new: true, runValidators: true },
     );
     if (user) {
-      return res.status(200).send({ data: user });
+      return res.status(200).send(user);
     }
     return res.status(404).send({ message: 'Пользователь не найден' });
   } catch (e) {
