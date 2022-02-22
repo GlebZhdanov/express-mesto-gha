@@ -42,15 +42,16 @@ module.exports.postUsers = async (req, res) => {
 module.exports.patchUsers = async (req, res) => {
   try {
     const { name, about } = req.body;
+    if (!name || !about) {
+      return res.status(400).send({ message: 'Поля "name" и "about" должно быть заполнены' });
+    }
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { name, about },
       { new: true, runValidators: true },
     );
-     if (user) {
-      return res.status(200).send(user);
-    } if (!name || !about) {
-      return res.status(400).send({ message: 'Поля "name" и "about" должно быть заполнены' });
+    if (user) {
+      return res.status(200).send({ data: user });
     }
     return res.status(404).send({ message: 'Пользователь не найден' });
   } catch (e) {
@@ -64,16 +65,16 @@ module.exports.patchUsers = async (req, res) => {
 module.exports.patchUsersAvatar = async (req, res) => {
   try {
     const { avatar } = req.body;
+    if (!avatar) {
+      return res.status(400).send({ message: 'Поле "avatar" должно быть заполнено' });
+    }
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { avatar },
       { new: true, runValidators: true },
     );
     if (user) {
-      return res.status(200).send(user);
-    }
-    if (!avatar) {
-      return res.status(400).send({ message: 'Поле "avatar" должно быть заполнено' });
+      return res.status(200).send({ data: user });
     }
     return res.status(404).send({ message: 'Пользователь не найден' });
   } catch (e) {
