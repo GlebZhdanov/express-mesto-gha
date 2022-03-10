@@ -1,49 +1,64 @@
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
-module.exports.getUsers = async (req, res) => {
+const NotFoundErr = require('../error/NotFoundErr');
+const BadRequestErr = require('../error/BadRequestErr');
+const ConflictError = require('../error/ConflictError');
+const UnAuthorizeErr = require('../error/UnAuthtorizeErr');
+
+const MONGO_DUPLICATE_ERROR_CODE = 11000;
+const SOLT_ROUND = 10;
+
+module.exports.getUsers = async (req, res, next) => {
   try {
     const user = await User.find({});
     res.status(200).send(user);
-  } catch (e) {
-    res.status(500).send({ message: 'Ошибка по умолчанию' });
+  } catch (err) {
+    next(err);
   }
 };
 
-module.exports.getUsersById = async (req, res) => {
+module.exports.getUser = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(req.user._id);
     if (user) {
       res.status(200).send(user);
     } else {
-      res.status(404).send({ message: 'Пользователь не найден' });
+      throw new NotFoundErr('Пользователь с указанным id не найден');
     }
-  } catch (e) {
-    if (e.name === 'CastError') {
-      res.status(400).send({ message: 'Ошибка валидации id' });
+  } catch (err) {
+    if (err.name === 'CastError') {
+      next(new BadRequestErr('Ошибка валидации id'));
     } else {
-      res.status(500).send({ message: 'Произошла ошибка' });
+      next(err);
     }
   }
 };
 
-module.exports.postUsers = async (req, res) => {
+module.exports.getUsersById = async (req, res, next) => {
   try {
-    const { name, about, avatar } = req.body;
-    const user = new User({ name, about, avatar });
-    return res.status(201).send(await user.save());
-  } catch (e) {
-    if (e.name === 'ValidationError') {
-      return res.status(400).send({ message: 'Переданы некорректные данные пользователя' });
+    const { userId } = req.params.id;
+    const user = await User.findById(userId);
+    if (user) {
+      res.status(200).send(user);
+    } else {
+      throw new NotFoundErr('Пользователь с указанным id не найден');
     }
-    return res.status(500).send({ message: 'Ошибка по умолчанию' });
+  } catch (err) {
+    if (err.name === 'CastError') {
+      next(new BadRequestErr('Ошибка валидации id'));
+    } else {
+      next(err);
+    }
   }
 };
 
-module.exports.patchUsers = async (req, res) => {
+module.exports.patchUsers = async (req, res, next) => {
   try {
     const { name, about } = req.body;
     if (!name || !about) {
-      return res.status(400).send({ message: 'Поля "name" и "about" должно быть заполнены' });
+      throw new BadRequestErr('Поля "name" и "about" должно быть заполнены');
     }
     const user = await User.findByIdAndUpdate(
       req.user._id,
@@ -51,22 +66,25 @@ module.exports.patchUsers = async (req, res) => {
       { new: true, runValidators: true },
     );
     if (user) {
-      return res.status(200).send(user);
+      res.status(200).send(user);
+    } else {
+      throw new NotFoundErr('Пользователь с указанным id не найден');
     }
-    return res.status(404).send({ message: 'Пользователь не найден' });
-  } catch (e) {
-    if (e.name === 'ValidationError') {
-      return res.status(400).send({ message: 'Переданы некорректные данные пользователя' });
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      next(new BadRequestErr(`${Object.values(err.errors).map((error) => error.message).join(', ')}`));
+    } else {
+      next(err);
     }
-    return res.status(500).send({ message: 'Ошибка по умолчанию' });
   }
 };
 
-module.exports.patchUsersAvatar = async (req, res) => {
+module.exports.patchUsersAvatar = async (req, res, next) => {
   try {
     const { avatar } = req.body;
+
     if (!avatar) {
-      return res.status(400).send({ message: 'Поле "avatar" должно быть заполнено' });
+      throw new BadRequestErr('Поля "avatar" должно быть заполнены');
     }
     const user = await User.findByIdAndUpdate(
       req.user._id,
@@ -74,13 +92,73 @@ module.exports.patchUsersAvatar = async (req, res) => {
       { new: true, runValidators: true },
     );
     if (user) {
-      return res.status(200).send(user);
+      res.status(200).send(user);
+    } else {
+      throw new NotFoundErr('Пользователь с указанным id не найден');
     }
-    return res.status(404).send({ message: 'Пользователь не найден' });
-  } catch (e) {
-    if (e.name === 'ValidationError') {
-      return res.status(400).send({ message: 'Переданы некорректные данные пользователя' });
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      next(new BadRequestErr(`${Object.values(err.errors).map((error) => error.message).join(', ')}`));
+    } else {
+      next(err);
     }
-    return res.status(500).send({ message: 'Ошибка по умолчанию' });
   }
+};
+
+module.exports.createUser = (req, res, next) => {
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
+
+  if (!email || !password) {
+    throw new BadRequestErr('Не верный email или пароль');
+  }
+
+  bcrypt.hash(password, SOLT_ROUND)
+    .then((hash) => User.create({
+      name,
+      about,
+      avatar,
+      email,
+      password: hash,
+    }))
+    .then((createUser) => res.status(201).send(createUser))
+    .catch((err) => {
+      if (err.code === MONGO_DUPLICATE_ERROR_CODE) {
+        next(new ConflictError('Пользователь уже существует'));
+      } else if (err.name === 'ValidationError') {
+        next(new BadRequestErr(`${Object.values(err.errors).map((error) => error.message).join(', ')}`));
+      }
+    })
+    .catch(next);
+};
+
+module.exports.loginUser = (req, res, next) => {
+  const { email, password } = req.body;
+
+  User.findOne({ email }).select('+password')
+    .orFail(new Error('Пользователь не найден'))
+    .then((admin) => {
+      if (!admin) {
+        throw new UnAuthorizeErr('Не верный email или пароль');
+      }
+      const token = jwt.sign(
+        { _id: admin._id },
+        'secret',
+        { expiresIn: '7d' },
+      );
+      res.cookie('jwt', token, {
+        maxAge: 36000000,
+        httpOnly: true,
+        sameSite: true,
+      });
+      bcrypt.compare(password, admin.password)
+        .then((matches) => {
+          if (!matches) {
+            throw new UnAuthorizeErr('Не верный email или пароль');
+          }
+          res.status(200).send({ message: 'Успешная авторизация' });
+        });
+    })
+    .catch((err) => next(err));
 };

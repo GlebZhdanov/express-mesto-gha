@@ -1,21 +1,22 @@
 const express = require('express');
 const {
   getUsers,
-  postUsers,
   getUsersById,
   patchUsers,
   patchUsersAvatar,
+  getUser,
 } = require('../controllers/users');
+const { validateUserPatch, validationIdUser } = require('../middleware/validation');
 
 const router = express.Router();
 
 router.get('/', getUsers);
 
-router.get('/:id', getUsersById);
+router.get('/me', getUser);
 
-router.post('/', postUsers);
+router.get('/:id', validationIdUser, getUsersById);
 
-router.patch('/me', patchUsers);
+router.patch('/me', validateUserPatch, patchUsers);
 
 router.patch('/me/avatar', patchUsersAvatar);
 

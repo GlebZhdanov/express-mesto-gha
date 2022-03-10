@@ -1,17 +1,18 @@
 const Card = require('../models/card');
+const BadRequestErr = require('../error/BadRequestErr');
+const NotFoundErr = require('../error/NotFoundErr');
+const ForbiddenErr = require('../error/ForbiddenErr');
 
-exports.getCards = async (req, res) => {
+exports.getCards = async (req, res, next) => {
   try {
     const card = await Card.find({});
     res.status(200).send(card);
-  } catch (e) {
-    res.status(500).send({
-      message: 'Ошибка по умолчанию',
-    });
+  } catch (err) {
+    next(err);
   }
 };
 
-exports.postCards = async (req, res) => {
+exports.postCards = async (req, res, next) => {
   try {
     const {
       name, link,
@@ -20,64 +21,75 @@ exports.postCards = async (req, res) => {
     const card = new Card({
       name, link, owner,
     });
-    return res.status(201).send(await card.save());
-  } catch (e) {
-    if (e.name === 'ValidationError') {
-      return res.status(400).send({ message: 'Переданы некорректные данные карточки' });
+    res.status(201).send(await card.save());
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      next(new BadRequestErr(`${Object.values(err.errors).map((error) => error.message).join(', ')}`));
+    } else {
+      next(err);
     }
-    return res.status(500).send({ message: 'Ошибка по умолчанию' });
   }
 };
 
-exports.deleteCard = async (req, res) => {
+exports.deleteCard = async (req, res, next) => {
   try {
-    const card = await Card.findByIdAndDelete(req.params.id);
-    if (card) {
-      return res.status(200).send(card);
+    const { cardId } = req.params.id;
+    const cardSearch = await Card.findById(cardId);
+    const card = await cardSearch.findOneAndRemove(cardId);
+    if (card.owner.toString() === req.user._id) {
+      res.status(200).send(card);
+    } else {
+      throw new ForbiddenErr('Не достаточно прав для операции');
     }
-    return res.status(404).send({ message: 'Карточка не найдена' });
-  } catch (e) {
-    if (e.name === 'CastError') {
-      return res.status(400).send({ message: 'Невалидный id ' });
+  } catch (err) {
+    if (err.name === 'CastError') {
+      next(new BadRequestErr('Ошибка валидации id'));
+    } else {
+      next(err);
     }
-    return res.status(500).send({ message: 'Ошибка по умолчанию' });
   }
 };
 
-exports.putCardLike = async (req, res) => {
+exports.putCardLike = async (req, res, next) => {
   try {
+    const { cardId } = req.params.id;
     const likeCard = await Card.findByIdAndUpdate(
-      req.params.id,
+      cardId,
       { $addToSet: { likes: req.user._id } },
       { new: true },
     );
     if (likeCard) {
-      return res.status(200).send(likeCard);
+      res.status(200).send(likeCard);
+    } else {
+      throw new NotFoundErr('Карточка не найдена');
     }
-    return res.status(404).send({ message: 'Карточка не найдена' });
-  } catch (e) {
-    if (e.name === 'CastError') {
-      return res.status(400).send({ message: 'Невалидный id ' });
+  } catch (err) {
+    if (err.name === 'CastError') {
+      next(new BadRequestErr('Ошибка валидации id'));
+    } else {
+      next(err);
     }
-    return res.status(500).send({ message: 'Ошибка по умолчанию' });
   }
 };
 
-exports.deleteCardLike = async (req, res) => {
+exports.deleteCardLike = async (req, res, next) => {
   try {
+    const { cardId } = req.params.id;
     const dislikeCard = await Card.findByIdAndUpdate(
-      req.params.id,
+      cardId,
       { $pull: { likes: req.user._id } },
       { new: true },
     );
     if (dislikeCard) {
-      return res.status(200).send(dislikeCard);
+      res.status(200).send(dislikeCard);
+    } else {
+      throw new NotFoundErr('Карточка не найдена');
     }
-    return res.status(404).send({ message: 'Карточка не найдена' });
-  } catch (e) {
-    if (e.name === 'CastError') {
-      return res.status(400).send({ message: 'Невалидный id ' });
+  } catch (err) {
+    if (err.name === 'CastError') {
+      next(new BadRequestErr('Ошибка валидации id'));
+    } else {
+      next(err);
     }
-    return res.status(500).send({ message: 'Ошибка по умолчанию' });
   }
 };
