@@ -32,27 +32,26 @@ exports.postCards = async (req, res, next) => {
 };
 
 exports.deleteCard = async (req, res, next) => {
-  try {
-    const { cardId } = req.params.id;
-    const cardSearch = await Card.findById(cardId);
-    const card = await cardSearch.findOneAndRemove(cardId);
-    if (card.owner.toString() === req.user._id) {
-      res.status(200).send(card);
-    } else {
-      throw new ForbiddenErr('Не достаточно прав для операции');
-    }
-  } catch (err) {
-    if (err.name === 'CastError') {
-      next(new BadRequestErr('Ошибка валидации id'));
-    } else {
-      next(err);
-    }
-  }
+  const cardId = req.params.id;
+  Card.findById(cardId)
+    .orFail(() => {
+      throw new NotFoundErr('Карточка не найденна');
+    })
+    .then((card) => {
+      if (card.owner.toString() === req.user._id) {
+        throw new ForbiddenErr('Удалять можно только свои карточки');
+      }
+      return card.remove()
+        .then(() => {
+          res.send({ message: 'Карточка удаленна' });
+        });
+    })
+    .catch(next);
 };
 
 exports.putCardLike = async (req, res, next) => {
   try {
-    const { cardId } = req.params.id;
+    const cardId = req.params.id;
     const likeCard = await Card.findByIdAndUpdate(
       cardId,
       { $addToSet: { likes: req.user._id } },
@@ -74,7 +73,7 @@ exports.putCardLike = async (req, res, next) => {
 
 exports.deleteCardLike = async (req, res, next) => {
   try {
-    const { cardId } = req.params.id;
+    const cardId = req.params.id;
     const dislikeCard = await Card.findByIdAndUpdate(
       cardId,
       { $pull: { likes: req.user._id } },

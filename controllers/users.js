@@ -38,7 +38,7 @@ module.exports.getUser = async (req, res, next) => {
 
 module.exports.getUsersById = async (req, res, next) => {
   try {
-    const { userId } = req.params.id;
+    const userId = req.params.id;
     const user = await User.findById(userId);
     if (user) {
       res.status(200).send(user);
@@ -115,19 +115,25 @@ module.exports.createUser = (req, res, next) => {
   }
 
   bcrypt.hash(password, SOLT_ROUND)
-    .then((hash) => User.create({
+    .then((user) => User.create({
       name,
       about,
       avatar,
       email,
-      password: hash,
+      password: user,
     }))
-    .then((createUser) => res.status(201).send(createUser))
+    .then(() => res.status(201).send({
+      data: {
+        about, name, avatar, email,
+      },
+    }))
     .catch((err) => {
       if (err.code === MONGO_DUPLICATE_ERROR_CODE) {
         next(new ConflictError('Пользователь уже существует'));
       } else if (err.name === 'ValidationError') {
         next(new BadRequestErr(`${Object.values(err.errors).map((error) => error.message).join(', ')}`));
+      } else {
+        next(err);
       }
     })
     .catch(next);
@@ -137,27 +143,22 @@ module.exports.loginUser = (req, res, next) => {
   const { email, password } = req.body;
 
   User.findOne({ email }).select('+password')
-    .orFail(new Error('Пользователь не найден'))
+    .orFail(new UnAuthorizeErr('Не верный email или пароль'))
     .then((admin) => {
       if (!admin) {
         throw new UnAuthorizeErr('Не верный email или пароль');
       }
-      const token = jwt.sign(
-        { _id: admin._id },
-        'secret',
-        { expiresIn: '7d' },
-      );
-      res.cookie('jwt', token, {
-        maxAge: 36000000,
-        httpOnly: true,
-        sameSite: true,
-      });
-      bcrypt.compare(password, admin.password)
+      return bcrypt.compare(password, admin.password)
         .then((matches) => {
           if (!matches) {
             throw new UnAuthorizeErr('Не верный email или пароль');
           }
-          res.status(200).send({ message: 'Успешная авторизация' });
+          const token = jwt.sign(
+            { _id: admin._id },
+            'secret',
+            { expiresIn: '7d' },
+          );
+          res.send({ message: token });
         });
     })
     .catch((err) => next(err));

@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const UnAuthtorizeErr = require('../error/UnAuthtorizeErr');
 
 module.exports = (req, res, next) => {
   const token = req.headers.authorization;
@@ -8,7 +9,7 @@ module.exports = (req, res, next) => {
   try {
     payload = jwt.verify(token, 'secret');
   } catch (err) {
-    return res.status(403).send({ message: 'Нет доступа' });
+    throw new UnAuthtorizeErr('Ошибка авторизации');
   }
 
   req.user = payload;
