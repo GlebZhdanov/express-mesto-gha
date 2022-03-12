@@ -38,7 +38,7 @@ exports.deleteCard = async (req, res, next) => {
       throw new NotFoundErr('Карточка не найденна');
     })
     .then((card) => {
-      if (card.owner.toString() === req.user._id) {
+      if (card.owner.toString() !== req.user._id) {
         throw new ForbiddenErr('Удалять можно только свои карточки');
       }
       return card.remove()

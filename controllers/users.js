@@ -158,7 +158,7 @@ module.exports.loginUser = (req, res, next) => {
             'secret',
             { expiresIn: '7d' },
           );
-          res.send({ message: token });
+          res.send({ message: `Bearer ${token}` });
         });
     })
     .catch((err) => next(err));
