@@ -71,7 +71,7 @@ module.exports.patchUsers = async (req, res, next) => {
       throw new NotFoundErr('Пользователь с указанным id не найден');
     }
   } catch (err) {
-    if (err.name === 'ValidationError') {
+    if (err.name === 'VaidationError') {
       next(new BadRequestErr(`${Object.values(err.errors).map((error) => error.message).join(', ')}`));
     } else {
       next(err);
