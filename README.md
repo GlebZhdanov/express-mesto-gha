@@ -21,5 +21,5 @@
 
 ##### `npm run build` – production сборка проекта
 
-### **Ссылка на готовый бекенд: [Mesto Russia React-Express](https://api.glmesto.nomoredomains.nomoredomains.work)**
+### **Ссылка на готовый бекенд: [Mesto-Express](https://api.glmesto.nomoredomains.nomoredomains.work)**
 
